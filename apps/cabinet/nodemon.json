@@ -1,0 +1,12 @@
+{
+  "watch": ["src", "../../libs"],
+  "ext": "ts,js,json",
+  "ignore": ["src/**/*.test.ts", "src/**/*.spec.ts", "../../libs/**/*.test.ts", "../../libs/**/*.spec.ts"],
+  "exec": "node scripts/dev-server.mjs",
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "restartable": "rs",
+  "colours": true,
+  "delay": 1000
+}

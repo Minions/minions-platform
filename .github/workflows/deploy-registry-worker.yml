@@ -1,0 +1,56 @@
+name: Deploy Registry Worker
+
+# Triggers on any push to main that touches the worker or this workflow file.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/registry-worker/**'
+      - '.github/workflows/deploy-registry-worker.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Cache node_modules
+        id: cache-nm
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Install dependencies
+        if: steps.cache-nm.outputs.cache-hit != 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Type-check
+        run: pnpm exec nx run registry-worker:typecheck
+
+      # Sync worker secrets from GitHub Actions secrets into Cloudflare.
+      # Running these on every deploy keeps them in sync if they are rotated.
+      - name: Sync worker secrets
+        working-directory: apps/registry-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        run: |
+          printf '%s' "${{ secrets.CF_GITHUB_APP_ID }}"          | npx wrangler secret put GITHUB_APP_ID
+          printf '%s' "${{ secrets.CF_GITHUB_PRIVATE_KEY }}"     | npx wrangler secret put GITHUB_PRIVATE_KEY
+          printf '%s' "${{ secrets.CF_GITHUB_INSTALLATION_ID }}" | npx wrangler secret put GITHUB_INSTALLATION_ID
+
+      - name: Deploy
+        working-directory: apps/registry-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        run: npx wrangler deploy

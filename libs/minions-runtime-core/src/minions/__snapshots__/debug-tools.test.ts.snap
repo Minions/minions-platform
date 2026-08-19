@@ -1,0 +1,17 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`formatPromptSummary > respects custom maxLength parameter 1`] = `
+{
+  "isTruncated": true,
+  "length": 33,
+  "withinLimit": true,
+}
+`;
+
+exports[`formatPromptSummary > truncates long prompts to 100 chars with ellipsis 1`] = `
+{
+  "isTruncated": true,
+  "length": 103,
+  "withinLimit": true,
+}
+`;

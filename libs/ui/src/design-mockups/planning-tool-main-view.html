@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Mikado Command Center</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&amp;family=Inter:wght@300;400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style type="text/tailwindcss">
+        :root {
+            /* Design system tokens for planning tool */
+            --color-background-deep: #0a0c10;
+            --color-surface-primary: #13171f;
+            --color-surface-secondary: #1c232d;
+            --color-accent-primary: #00d4ff;
+            --color-warning: #ffb800;
+            --color-text-muted: #8b949e;
+            --color-border: #30363d;
+            --color-text-primary: #e6edf3;
+
+            /* Legacy aliases for transition - TODO: Update all references */
+            --bg-deep: var(--color-background-deep);
+            --bg-panel: var(--color-surface-primary);
+            --bg-accent: var(--color-surface-secondary);
+            --electric-blue: var(--color-accent-primary);
+            --amber-warn: var(--color-warning);
+            --text-muted: var(--color-text-muted);
+            --border-ui: var(--color-border);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--color-background-deep);
+            color: var(--color-text-primary);
+        }
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .scanline {
+            background: linear-gradient(to bottom, transparent 50%, rgba(0, 212, 255, 0.02) 50%);
+            background-size: 100% 4px;
+        }
+        .glow-blue { box-shadow: 0 0 15px rgba(0, 212, 255, 0.15); }
+        .glow-amber { box-shadow: 0 0 15px rgba(255, 184, 0, 0.15); }
+        .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+        .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background: var(--border-ui); border-radius: 10px; }
+    </style>
+</head>
+<body class="h-screen overflow-hidden flex flex-col antialiased">
+<header class="h-14 border-b border-[var(--border-ui)] bg-[var(--bg-panel)] flex items-center justify-between px-6 shrink-0 z-50">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 bg-[var(--electric-blue)] flex items-center justify-center rounded">
+<span class="material-symbols-outlined text-[var(--bg-deep)] font-bold">hub</span>
+</div>
+<!-- @ai: Replace with actual branding - should this be the planning tool name? -->
+<h1 class="font-bold tracking-tighter text-lg mono">PLANNING.SYS <span class="text-[var(--electric-blue)]">v2.1</span></h1>
+</div>
+<nav class="hidden md:flex gap-6 text-xs font-medium mono text-[var(--text-muted)] uppercase tracking-widest">
+<a class="text-[var(--electric-blue)] border-b border-[var(--electric-blue)] pb-1" href="#">Plans</a>
+<a class="hover:text-white" href="#">Active Items</a>
+<a class="hover:text-white" href="#">Dependencies</a>
+<a class="hover:text-white" href="#">Analytics</a>
+</nav>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2 mono text-[10px] text-[var(--text-muted)]">
+<span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                PLANS SYNCED / LAST UPDATE: 2m ago
+            </div>
+<div class="flex gap-4">
+<span class="material-symbols-outlined text-[var(--text-muted)] cursor-pointer hover:text-white">notifications</span>
+<span class="material-symbols-outlined text-[var(--text-muted)] cursor-pointer hover:text-white">settings</span>
+<div class="w-8 h-8 rounded-full border border-[var(--border-ui)] overflow-hidden">
+<img alt="User" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAe4a075nbBgrkjC6CnvYyFmJeermPECr35evz36T2Sn-pMI89wFYzmikJgWFZ5BSe-QQTI28DeVH9fLtKaFhLbClyJ1XGEFw3Hy0A758pO01qvc2UuXXOVPrr-pvlBl3p1i17uC10FvNB8I7BfCLsBjB3OwR0s8VJkuHxw68hvsaaF1QSuACIfVQRvY2ShhQoA7TdysIRLzICx8CmgLHzca7hPc1_aC2q-thhx-niyBvrLUU7eM0TZwBUhkGJoNpF0L6eyTMydaO8"/>
+</div>
+</div>
+</div>
+</header>
+<main class="flex-1 flex overflow-hidden">
+<aside class="w-80 border-r border-[var(--border-ui)] bg-[var(--bg-panel)] flex flex-col shrink-0">
+<div class="p-4 border-b border-[var(--border-ui)] flex items-center justify-between">
+<h2 class="mono text-xs font-bold tracking-[0.2em] text-[var(--text-muted)] uppercase">Recent Activity</h2>
+<span class="mono text-[10px] px-2 py-0.5 rounded bg-[var(--bg-accent)] text-[var(--electric-blue)]">7 ACTIVE</span>
+</div>
+<!-- @ai: Activity feed needs to be populated from actual plan activity events and user actions -->
+<div class="flex-1 overflow-y-auto scrollbar-thin p-4 space-y-4">
+<div class="group bg-[var(--bg-accent)] border-l-2 border-[var(--electric-blue)] p-3 glow-blue">
+<div class="flex justify-between items-start mb-2">
+<span class="mono text-[10px] text-[var(--electric-blue)] font-bold">#PLAN-847</span>
+<span class="material-symbols-outlined text-xs text-[var(--text-muted)]">more_horiz</span>
+</div>
+<p class="text-xs font-semibold mb-3">Implement user authentication flow</p>
+<div class="flex items-center justify-between">
+<span class="flex items-center gap-1 text-[10px] text-[var(--text-muted)]">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+                            COMPLETED
+                        </span>
+<button class="bg-[var(--electric-blue)] text-[var(--bg-deep)] px-2 py-1 text-[10px] font-bold uppercase rounded">View</button>
+</div>
+</div>
+<div class="bg-[var(--bg-accent)] border-l-2 border-[var(--amber-warn)] p-3 glow-amber">
+<div class="flex justify-between items-start mb-2">
+<span class="mono text-[10px] text-[var(--amber-warn)] font-bold">#PLAN-521</span>
+<span class="material-symbols-outlined text-xs text-[var(--text-muted)]">warning</span>
+</div>
+<p class="text-xs font-semibold mb-3">Database schema migration strategy</p>
+<div class="flex items-center justify-between">
+<span class="flex items-center gap-1 text-[10px] text-[var(--amber-warn)]">
+<span class="material-symbols-outlined text-[14px]">help</span>
+                            QUESTION OPEN
+                        </span>
+<button class="border border-[var(--amber-warn)] text-[var(--amber-warn)] px-2 py-1 text-[10px] font-bold uppercase rounded">Answer</button>
+</div>
+</div>
+<div class="bg-[var(--bg-accent)] border-l-2 border-gray-600 p-3 opacity-80">
+<div class="flex justify-between items-start mb-2">
+<span class="mono text-[10px] text-gray-500 font-bold">#PLAN-332</span>
+<span class="material-symbols-outlined text-xs text-[var(--text-muted)]">hourglass_empty</span>
+</div>
+<p class="text-xs font-semibold mb-3">Frontend UI component library setup</p>
+<div class="flex items-center justify-between">
+<span class="text-[10px] text-[var(--text-muted)] uppercase tracking-tighter">Blocked: Waiting for Plan-847</span>
+</div>
+</div>
+<div class="group bg-[var(--bg-accent)] border-l-2 border-[var(--electric-blue)] p-3">
+<div class="flex justify-between items-start mb-2">
+<span class="mono text-[10px] text-[var(--electric-blue)] font-bold">#PLAN-729</span>
+<span class="material-symbols-outlined text-xs text-[var(--text-muted)]">more_horiz</span>
+</div>
+<p class="text-xs font-semibold mb-3">API rate limiting and caching layer</p>
+<div class="flex items-center justify-between">
+<span class="flex items-center gap-1 text-[10px] text-[var(--text-muted)]">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+                            IN PROGRESS
+                        </span>
+<button class="bg-[var(--electric-blue)] text-[var(--bg-deep)] px-2 py-1 text-[10px] font-bold uppercase rounded">Details</button>
+</div>
+</div>
+</div>
+</aside>
+<!-- @ai: Central visualization needs interactive pan/zoom and should render actual plan tree structure -->
+<section class="flex-1 relative bg-[var(--bg-deep)] overflow-hidden scanline">
+<div class="absolute top-6 left-6 z-10 flex gap-2">
+<button class="bg-[var(--bg-panel)] border border-[var(--border-ui)] p-2 hover:bg-[var(--bg-accent)] flex items-center justify-center">
+<span class="material-symbols-outlined text-sm">zoom_in</span>
+</button>
+<button class="bg-[var(--bg-panel)] border border-[var(--border-ui)] p-2 hover:bg-[var(--bg-accent)] flex items-center justify-center">
+<span class="material-symbols-outlined text-sm">zoom_out</span>
+</button>
+<button class="bg-[var(--bg-panel)] border border-[var(--border-ui)] p-2 hover:bg-[var(--bg-accent)] flex items-center justify-center">
+<span class="material-symbols-outlined text-sm">center_focus_strong</span>
+</button>
+</div>
+<div class="absolute bottom-6 left-6 z-10 mono text-[10px] space-y-1 bg-[var(--bg-panel)]/80 backdrop-blur p-4 border border-[var(--border-ui)]">
+<div class="flex justify-between w-40">
+<span class="text-[var(--text-muted)]">PLAN ITEMS:</span>
+<span class="text-white">23</span>
+</div>
+<div class="flex justify-between w-40 border-t border-[var(--border-ui)] pt-1">
+<span class="text-[var(--text-muted)]">BLOCKED:</span>
+<span class="text-[var(--amber-warn)]">3</span>
+</div>
+<div class="flex justify-between w-40 border-t border-[var(--border-ui)] pt-1">
+<span class="text-[var(--text-muted)]">COMPLETION:</span>
+<span class="text-[var(--electric-blue)]">67%</span>
+</div>
+</div>
+<!-- @ai: SVG visualization should be replaced with dynamic component that reads plan tree data -->
+<div class="absolute inset-0 flex items-center justify-center opacity-40">
+<svg class="w-full h-full max-w-4xl max-auto" height="600" viewBox="0 0 800 600" width="800">
+<line stroke="var(--electric-blue)" stroke-width="1" x1="400" x2="250" y1="300" y2="150"></line>
+<line stroke="var(--electric-blue)" stroke-width="1" x1="400" x2="550" y1="300" y2="150"></line>
+<line stroke="var(--amber-warn)" stroke-width="2" x1="400" x2="400" y1="300" y2="500"></line>
+<line stroke="var(--border-ui)" stroke-dasharray="4" stroke-width="1" x1="250" x2="150" y1="150" y2="50"></line>
+<line stroke="var(--border-ui)" stroke-dasharray="4" stroke-width="1" x1="250" x2="350" y1="150" y2="50"></line>
+<circle cx="400" cy="300" fill="var(--bg-panel)" r="12" stroke="var(--electric-blue)" stroke-width="2"></circle>
+<circle cx="250" cy="150" fill="var(--electric-blue)" r="8"></circle>
+<circle cx="550" cy="150" fill="var(--electric-blue)" r="8"></circle>
+<circle cx="400" cy="500" fill="var(--bg-panel)" r="10" stroke="var(--amber-warn)" stroke-width="3"></circle>
+<circle cx="150" cy="50" fill="var(--border-ui)" r="6"></circle>
+<circle cx="350" cy="50" fill="var(--border-ui)" r="6"></circle>
+</svg>
+</div>
+<!-- @ai: This central node visualization needs to be dynamic and show actual plan hierarchy -->
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[60px] bg-[var(--bg-panel)] border border-[var(--electric-blue)] p-2 rounded shadow-2xl glow-blue text-center">
+<p class="mono text-[10px] text-[var(--electric-blue)] uppercase">Root Plan</p>
+<h3 class="text-xs font-bold px-4">E-COMMERCE_PLATFORM</h3>
+</div>
+</section>
+<!-- @ai: Right sidebar needs to switch between plan details, questions, and activity based on selected item -->
+<aside class="w-96 border-l border-[var(--border-ui)] bg-[var(--bg-panel)] flex flex-col shrink-0">
+<div class="p-6 border-b border-[var(--border-ui)]">
+<div class="flex items-center justify-between mb-4">
+<span class="mono text-[10px] px-2 py-0.5 rounded bg-[var(--bg-accent)] text-[var(--amber-warn)] border border-[var(--amber-warn)]/20">QUESTION</span>
+<span class="mono text-[10px] text-[var(--text-muted)]">ID: PLAN-521</span>
+</div>
+<h2 class="text-xl font-bold leading-tight mb-2">Database Schema Migration Strategy</h2>
+<p class="text-sm text-[var(--text-muted)] mb-6">Parent: <span class="text-white mono underline">#PLAN-100</span> • <span class="text-white mono underline">Data Infrastructure</span></p>
+<div class="space-y-4">
+<!-- @ai: Progress calculation should be based on completed sub-items -->
+<div class="flex justify-between items-center bg-[var(--bg-accent)] p-3 rounded border border-[var(--border-ui)]">
+<span class="text-xs mono uppercase text-[var(--text-muted)]">Progress</span>
+<div class="flex-1 mx-4 h-1.5 bg-gray-800 rounded-full overflow-hidden">
+<div class="w-2/5 h-full bg-[var(--electric-blue)]"></div>
+</div>
+<span class="text-xs mono">40%</span>
+</div>
+</div>
+</div>
+<div class="flex-1 flex flex-col min-h-0">
+<div class="px-6 py-4 border-b border-[var(--border-ui)] bg-[var(--bg-accent)]/50">
+<h3 class="text-xs font-bold uppercase tracking-wider mono flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-[var(--amber-warn)]">help_center</span>
+                        Open Questions
+                    </h3>
+</div>
+<div class="flex-1 overflow-y-auto scrollbar-thin p-6 space-y-6">
+<!-- @ai: Question/answer format should integrate with actual plan item questions API -->
+<div class="flex gap-4">
+<div class="w-8 h-8 rounded shrink-0 bg-blue-900 flex items-center justify-center text-[10px] mono">AI</div>
+<div class="flex-1">
+<div class="flex items-baseline gap-2 mb-1">
+<span class="text-xs font-bold">Planning Assistant</span>
+<span class="mono text-[9px] text-[var(--text-muted)]">2h ago</span>
+</div>
+<p class="text-xs leading-relaxed text-gray-300 bg-[var(--bg-accent)] p-3 rounded">Should we implement horizontal sharding with automated scaling, or use a simpler vertical partitioning approach for the initial rollout?</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="w-8 h-8 rounded shrink-0 bg-amber-900 flex items-center justify-center text-[10px] mono">DM</div>
+<div class="flex-1">
+<div class="flex items-baseline gap-2 mb-1">
+<span class="text-xs font-bold">Database Team</span>
+<span class="mono text-[9px] text-[var(--text-muted)]">45m ago</span>
+</div>
+<p class="text-xs leading-relaxed text-gray-300 border border-[var(--border-ui)] p-3 rounded italic">"Recommend starting with vertical partitioning - less operational complexity for v1. Can migrate to horizontal later."</p>
+</div>
+</div>
+</div>
+<!-- @ai: Input area needs proper form handling and should integrate with plan questions API -->
+<div class="p-4 border-t border-[var(--border-ui)]">
+<div class="relative">
+<input class="w-full bg-[var(--bg-deep)] border-[var(--border-ui)] rounded p-3 text-xs mono focus:ring-[var(--electric-blue)] focus:border-[var(--electric-blue)] placeholder:text-gray-700" placeholder="Add question or update..." type="text"/>
+<button class="absolute right-3 top-2 text-[var(--electric-blue)]">
+<span class="material-symbols-outlined">send</span>
+</button>
+</div>
+</div>
+</div>
+</aside>
+</main>
+<footer class="h-8 border-t border-[var(--border-ui)] bg-[var(--bg-panel)] flex items-center justify-between px-6 shrink-0 z-50 mono text-[9px] text-[var(--text-muted)]">
+<div class="flex gap-4">
+<span class="text-[var(--electric-blue)] uppercase font-bold">Live Sync Active</span>
+<span>Last sync: 2m ago</span>
+<span>Response time: 120ms</span>
+</div>
+<div class="flex gap-6 uppercase">
+<span>Plan depth: 4 levels</span>
+<span class="text-[var(--amber-warn)]">3 Questions Open</span>
+<span class="text-white">User: Development Team</span>
+</div>
+</footer>
+
+</body></html>

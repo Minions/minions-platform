@@ -1,0 +1,50 @@
+{
+  "name": "@minions/quality-watcher",
+  "version": "0.1.0",
+  "description": "Quality monitoring system for watching tests, types, lint, and build status",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "vite build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "keywords": [
+    "ai",
+    "minions",
+    "quality",
+    "watcher"
+  ],
+  "author": "Untangler",
+  "license": "None",
+  "dependencies": {
+    "@minions/events": "workspace:*",
+    "@minions/file-store": "workspace:*",
+    "cross-spawn": "^7.0.6",
+    "effect": "catalog:",
+    "eslint": "^9.8.0",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  },
+  "devDependencies": {
+    "@types/cross-spawn": "^6.0.6",
+    "@types/node": "catalog:",
+    "typescript-eslint": "^8.19.0"
+  },
+  "nx": {
+    "tags": ["platform:node"]
+  }
+}

@@ -1,0 +1,42 @@
+name = "registry-worker"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+
+# ── Worker route ───────────────────────────────────────────────────────────────
+# Serves the API at https://quartermaster-upload.minions.tools
+# Wrangler creates the DNS record automatically on deploy.
+# Requires Zone:DNS:Edit permission on the CF_API_TOKEN (add it in the dashboard
+# under your API token settings before the next deploy).
+[[routes]]
+pattern = "quartermaster-upload.minions.tools"
+custom_domain = true
+
+# ── R2 bucket ─────────────────────────────────────────────────────────────────
+# Served publicly at https://quartermaster.minions.tools (custom domain on bucket).
+[[r2_buckets]]
+binding = "ARCHIVE_BUCKET"
+bucket_name = "costume-registry-archives"
+
+# ── Non-sensitive configuration ───────────────────────────────────────────────
+# Fill these in once and commit. They are not secrets.
+[vars]
+# GitHub repo that holds config.json and index/ files.  Format: "owner/repo"
+INDEX_REPO = "Minions/quartermaster"
+
+# ── Secrets ───────────────────────────────────────────────────────────────────
+# These are set automatically by the CD pipeline (deploy-registry-worker.yml)
+# from GitHub Actions secrets.  Never commit real values here.
+#
+# To set them manually (one-time bootstrap or rotation):
+#   npx wrangler secret put GITHUB_APP_ID
+#   npx wrangler secret put GITHUB_PRIVATE_KEY
+#   npx wrangler secret put GITHUB_INSTALLATION_ID
+#
+# For local dev create a .dev.vars file (gitignored):
+#   GITHUB_APP_ID=123456
+#   GITHUB_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n..."
+#   GITHUB_INSTALLATION_ID=12345678
+
+# ── Local dev ─────────────────────────────────────────────────────────────────
+# Run `npx wrangler dev` from this directory to start a local server on :8787.
+# The R2 bucket is simulated locally — no real Cloudflare account needed for dev.

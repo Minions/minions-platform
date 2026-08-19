@@ -1,0 +1,54 @@
+packages:
+  - 'apps/*'
+  - 'apps/dominion/src/frontend'
+  - 'libs/*'
+peerDependencyRules:
+  allowedVersions:
+    "@swc-node/core>@swc/core": ">=1.4.13"
+    "@typescript-eslint/parser>eslint": ">=9"
+    "@nx/vite>vite": ">=5"
+    "@vitejs/plugin-vue>vite": ">=5"
+    "vite-plugin-dts>vite": ">=5"
+catalog:
+  # TypeScript + types
+  typescript: ~5.7.3
+  '@types/node': ^22.x
+  '@types/express': ^4.17.21
+  '@types/cors': 2.8.19
+  # Build / bundle
+  esbuild: 0.27.3
+  vite: ^8.1.5
+  vite-node: ^6.0.0
+  vite-plugin-dts: ^5.0.3
+  # Vue ecosystem
+  vue: ^3.5.13
+  '@vue/server-renderer': ^3.5.13
+  vue-router: ^4.5.0
+  '@vitejs/plugin-vue': ^6.0.8
+  vue-tsc: ^2.2.8
+  '@vue/test-utils': ^2.4.6
+  # Test
+  vitest: ^4.1.10
+  '@vitest/coverage-v8': ^4.1.10
+  '@vitest/ui': ^4.1.10
+  jsdom: ~22.1.0
+  # Runtime
+  effect: 3.19.14
+  eventemitter3: ^5.0.1
+  # APIs
+  '@anthropic-ai/sdk': ^0.32.1
+  '@modelcontextprotocol/sdk': 1.20.0
+  # Server stack
+  express: ^4.18.2
+  cors: 2.8.5
+  dotenv: 17.3.1
+  # Dev tools
+  concurrently: ^9.1.2
+  nodemon: 3.1.10
+allowBuilds:
+  '@swc/core': true
+  esbuild: true
+  nx: true
+  sharp: true
+  vue-demi: true
+  workerd: true

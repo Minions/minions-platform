@@ -1,0 +1,45 @@
+{
+  "name": "@minions/movement-branching",
+  "version": "0.1.0",
+  "description": "Risk-aware git commit management and movement-based branching for AI agents",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "vite build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "keywords": [
+    "git",
+    "mcp",
+    "risk-aware",
+    "movement-branching",
+    "ai-agent"
+  ],
+  "author": "Untangler",
+  "license": "None",
+  "dependencies": {
+    "@minions/file-store": "workspace:*",
+    "@minions/quality-watcher": "workspace:*",
+    "@minions/repo-perspective": "workspace:*",
+    "@minions/scheduling": "workspace:*"
+  },
+  "devDependencies": {
+    "@minions/mcp-types": "workspace:*",
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

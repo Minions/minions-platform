@@ -1,0 +1,27 @@
+{
+  "name": "@minions/starter-minimal-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Minimal starter template for the server half of a Minions Platform application. Not published — copy `src/server.ts` and this package.json into a new application repo (swapping the workspace:* dependency for a published semver range) as the starting point for a from-scratch cabinet-equivalent server.",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": ["ai", "minions", "mcp", "sdk", "starter"],
+  "author": "Untangler",
+  "license": "None",
+  "dependencies": {
+    "@minions/platform-sdk": "workspace:*",
+    "express": "catalog:"
+  },
+  "devDependencies": {
+    "@types/express": "catalog:",
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "nx": {
+    "tags": ["platform:node"]
+  }
+}

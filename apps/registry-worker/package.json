@@ -1,0 +1,10 @@
+{
+  "name": "@minions/registry-worker",
+  "version": "0.1.0",
+  "private": true,
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241112.0",
+    "typescript": "catalog:",
+    "wrangler": "^4.0.0"
+  }
+}

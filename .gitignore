@@ -1,0 +1,78 @@
+# See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+
+# compiled output
+dist
+tmp
+out-tsc
+
+# dependencies
+node_modules
+
+# pnpm lock file backups (created during pnpm install, not source artifacts)
+pnpm-lock.yaml.*
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# misc
+/.sass-cache
+/connect.lock
+/coverage
+.env
+.env.local
+/libpeerconnection.log
+npm-debug.log
+yarn-error.log
+testem.log
+/typings
+/reports/**/unittests/
+
+# Python
+__pycache__/
+.coverage
+*.pyc
+
+# System Files
+.DS_Store
+Thumbs.db
+
+.nx/cache
+.nx/workspace-data
+.cursor/rules/nx-rules.mdc
+.github/instructions/nx.instructions.md
+
+vite.config.*.timestamp*
+vitest.config.*.timestamp*
+test-output
+build/
+*.tsbuildinfo
+
+.claude/
+.ai/
+.gemini/
+.cursor/
+
+# Cabinet built throne-room assets (generated, served at runtime)
+apps/cabinet/src/throne-room/
+
+# OpenCode config (test-specific, not committed)
+opencode.jsonc
+opencode.json
+.opencode/
+
+# Windows device name artifact (cannot be git-tracked on Windows)
+/nul
+playground/

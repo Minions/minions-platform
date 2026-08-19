@@ -1,0 +1,61 @@
+{
+  "name": "@minions/platform-sdk",
+  "version": "0.1.0",
+  "description": "The publishable Minions Platform SDK: bundles @minions/mcp-server-core (generic MCP session/transport/action-group mounting) and @minions/minions-runtime-core (the standard minion/mission/movement tool set) into one self-contained artifact an external application can install without cloning this repo.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist", "README.md"],
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "vite build && node scripts/bundle-dts.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "pack:dry-run": "pnpm build && pnpm pack --pack-destination ../../dist/pack-dry-run"
+  },
+  "keywords": ["ai", "minions", "mcp", "sdk"],
+  "author": "Untangler",
+  "license": "None",
+  "publishConfig": {
+    "access": "restricted"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "catalog:",
+    "@modelcontextprotocol/sdk": "catalog:",
+    "effect": "catalog:",
+    "eventemitter3": "catalog:",
+    "express": "catalog:"
+  },
+  "devDependencies": {
+    "@minions/conductor": "workspace:*",
+    "@minions/costumes": "workspace:*",
+    "@minions/domain-types": "workspace:*",
+    "@minions/events": "workspace:*",
+    "@minions/file-store": "workspace:*",
+    "@minions/gadgets": "workspace:*",
+    "@minions/hatchery": "workspace:*",
+    "@minions/mcp-server-core": "workspace:*",
+    "@minions/mcp-types": "workspace:*",
+    "@minions/minions-runtime-core": "workspace:*",
+    "@minions/movement-branching": "workspace:*",
+    "@minions/quality-watcher": "workspace:*",
+    "@minions/repo-perspective": "workspace:*",
+    "@minions/scheduling": "workspace:*",
+    "@types/express": "catalog:",
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "nx": {
+    "tags": ["platform:node"]
+  }
+}

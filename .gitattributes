@@ -1,0 +1,4 @@
+# Exclude all repository content from GitHub's auto-generated "Source code"
+# archives on releases. The archives are generated unconditionally by GitHub
+# but serve no purpose for this project — releases ship built artifacts only.
+* export-ignore

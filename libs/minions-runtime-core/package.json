@@ -1,0 +1,42 @@
+{
+  "name": "@minions/minions-runtime-core",
+  "version": "0.0.1",
+  "description": "Minions' own standard tool set — minion spawn/list/history/kill, missions, and movement/git operations — packaged as an importable lib any application can bind to its own @minions/mcp-server-core instance to get a working minion/mission/movement tool surface for free.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "vite build",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": ["ai", "minions", "mcp"],
+  "author": "Untangler",
+  "license": "None",
+  "dependencies": {
+    "@minions/conductor": "workspace:*",
+    "@minions/file-store": "workspace:*",
+    "@minions/hatchery": "workspace:*",
+    "@minions/mcp-types": "workspace:*",
+    "@minions/movement-branching": "workspace:*"
+  },
+  "devDependencies": {
+    "@minions/mcp-server-core": "workspace:*",
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "nx": {
+    "tags": ["platform:node"]
+  }
+}

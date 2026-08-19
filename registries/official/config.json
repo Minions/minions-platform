@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "name": "official",
+  "description": "Official costume registry for codewarp/minions costumes",
+  "baseUrl": "https://raw.githubusercontent.com/codewarp/costume-registry/main",
+  "archiveBaseUrl": "https://github.com/codewarp/costume-registry/releases/download"
+}

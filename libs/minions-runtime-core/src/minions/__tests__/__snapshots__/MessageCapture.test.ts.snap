@@ -1,0 +1,65 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`MessageCapture > creates interaction record with ID and timestamp 1`] = `
+{
+  "responseBlocks": [],
+  "status": "pending",
+  "userPrompt": "user prompt here",
+}
+`;
+
+exports[`MessageCapture > records response blocks of all types 1`] = `
+{
+  "blocks": [
+    {
+      "content": "thinking...",
+      "input": undefined,
+      "name": undefined,
+      "type": "reasoning",
+    },
+    {
+      "content": undefined,
+      "input": {
+        "path": "/test",
+      },
+      "name": "read_file",
+      "type": "tool_use",
+    },
+    {
+      "content": "file contents",
+      "input": undefined,
+      "name": undefined,
+      "type": "tool_result",
+    },
+    {
+      "content": "response text",
+      "input": undefined,
+      "name": undefined,
+      "type": "message",
+    },
+  ],
+  "status": "completed",
+}
+`;
+
+exports[`MessageCapture > separates user prompt from full request context 1`] = `
+{
+  "fullRequestContainsContext": true,
+  "fullRequestContainsPrompt": true,
+  "userPrompt": "user prompt",
+}
+`;
+
+exports[`MessageCapture > stores interaction history per minion 1`] = `
+{
+  "count": 2,
+  "prompts": [
+    "first prompt",
+    "second prompt",
+  ],
+  "statuses": [
+    "completed",
+    "completed",
+  ],
+}
+`;

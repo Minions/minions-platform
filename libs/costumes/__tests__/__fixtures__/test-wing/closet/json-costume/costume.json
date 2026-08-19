@@ -1,0 +1,5 @@
+{
+  "model": "claude-sonnet-4-20250514",
+  "systemPrompt": "You are a JSON-configured agent.",
+  "injectFacts": ["test", "json"]
+}

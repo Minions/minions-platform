@@ -1,0 +1,16 @@
+{
+  "name": "@minions/session-context",
+  "version": "0.1.0",
+  "description": "Live, per-session pointer to the current wing root / work root, and path resolution against it. Depends on @minions/file-store's disk representation but owns the runtime/session-state domain, not the disk domain.",
+  "type": "module",
+  "main": "./src/index.mjs",
+  "exports": {
+    ".": "./src/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "test": "node --test __tests__/*.test.mjs"
+  },
+  "keywords": ["session", "work-root", "wing-root", "path-resolution"],
+  "license": "MIT"
+}

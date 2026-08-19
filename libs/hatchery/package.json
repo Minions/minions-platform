@@ -1,0 +1,47 @@
+{
+  "name": "@minions/hatchery",
+  "version": "0.1.0",
+  "description": "Hexagonal architecture library for creating, managing, and communicating with AI minions",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint . --ext .ts",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "catalog:",
+    "@minions/costumes": "workspace:*",
+    "@minions/domain-types": "workspace:*",
+    "@minions/events": "workspace:*",
+    "@minions/file-store": "workspace:*",
+    "@minions/gadgets": "workspace:*",
+    "@modelcontextprotocol/sdk": "catalog:",
+    "effect": "catalog:",
+    "eventemitter3": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@vitest/ui": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "keywords": [
+    "ai",
+    "minions",
+    "hexagonal-architecture",
+    "claude",
+    "mcp"
+  ]
+}

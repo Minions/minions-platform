@@ -1,0 +1,19 @@
+{
+  "$schema": "https://shadcn-vue.com/schema.json",
+  "style": "default",
+  "typescript": true,
+  "tailwind": {
+    "config": "",
+    "css": "../../apps/throne-room/src/assets/main.css",
+    "baseColor": "slate",
+    "cssVariables": true
+  },
+  "framework": "vite",
+  "aliases": {
+    "components": "src/components",
+    "composables": "src/composables",
+    "utils": "src/lib/utils",
+    "ui": "src/components/ui",
+    "lib": "src/lib"
+  }
+}

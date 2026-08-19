@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "cabinet-lair": {
+      "type": "http",
+      "url": "http://localhost:39218/mcp/lair"
+    },
+    "cabinet-conductor": {
+      "type": "http",
+      "url": "http://localhost:39218/mcp/conductor"
+    }
+  }
+}

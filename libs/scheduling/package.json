@@ -1,0 +1,36 @@
+{
+  "name": "@minions/scheduling",
+  "version": "0.1.0",
+  "description": "Framework-agnostic scheduling primitives: detached async work, per-key serialization, and jittered periodic jobs",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "vite build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "keywords": [
+    "scheduling",
+    "concurrency",
+    "queue"
+  ],
+  "author": "Untangler",
+  "license": "None",
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

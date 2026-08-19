@@ -1,0 +1,52 @@
+{
+  "name": "@minions/conductor",
+  "version": "0.1.0",
+  "description": "Deterministic script-driven mission orchestration for AI minions",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "vite build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "keywords": [
+    "ai",
+    "minions",
+    "missions",
+    "conductor",
+    "orchestration",
+    "mcp"
+  ],
+  "author": "Untangler",
+  "license": "None",
+  "dependencies": {
+    "@minions/costumes": "workspace:*",
+    "@minions/domain-types": "workspace:*",
+    "@minions/events": "workspace:*",
+    "@minions/file-store": "workspace:*",
+    "@minions/gadgets": "workspace:*",
+    "@minions/mcp-types": "workspace:*",
+    "effect": "catalog:",
+    "eventemitter3": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "@minions/hatchery": "workspace:^0.1.0"
+  }
+}

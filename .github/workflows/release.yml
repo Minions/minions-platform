@@ -1,0 +1,35 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  # Compute the next semantic version from conventional commits since the last
+  # release tag, push that tag, and expose it to downstream jobs.
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      new_tag: ${{ steps.tag.outputs.new_tag }}
+      changelog: ${{ steps.tag.outputs.changelog }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Bump version and push tag
+        id: tag
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          default_bump: patch
+
+  pipeline:
+    needs: version
+    uses: ./.github/workflows/_release-pipeline.yml
+    with:
+      tag: ${{ needs.version.outputs.new_tag }}
+      changelog: ${{ needs.version.outputs.changelog }}
+    secrets: inherit

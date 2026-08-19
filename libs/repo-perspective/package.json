@@ -1,0 +1,40 @@
+{
+  "name": "@minions/repo-perspective",
+  "version": "0.1.0",
+  "description": "Universal wing/lair repo-perspective resolution for MCP action groups",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "vite build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "keywords": [
+    "mcp",
+    "repo-perspective",
+    "ai-agent"
+  ],
+  "author": "Untangler",
+  "license": "None",
+  "dependencies": {
+    "@minions/file-store": "workspace:*",
+    "@minions/scheduling": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

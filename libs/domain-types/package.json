@@ -1,0 +1,41 @@
+{
+  "name": "@minions/domain-types",
+  "version": "0.1.0",
+  "description": "Shared domain types for minions ecosystem - breaks circular dependencies",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "vite build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "keywords": [
+    "ai",
+    "minions",
+    "domain-types"
+  ],
+  "author": "Untangler",
+  "license": "None",
+  "dependencies": {
+    "@minions/costumes": "workspace:*",
+    "effect": "catalog:"
+  },
+  "devDependencies": {
+    "@minions/file-store": "workspace:*",
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

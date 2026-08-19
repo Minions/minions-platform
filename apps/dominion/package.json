@@ -1,0 +1,42 @@
+{
+  "name": "@minions/dominion",
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "build": "pnpm build:compile && pnpm build:frontend && pnpm build:copy-frontend",
+    "build:compile": "node scripts/build.js",
+    "build:frontend": "cd src/frontend && pnpm build",
+    "build:copy-frontend": "node scripts/copy-frontend.js",
+    "dev": "concurrently --kill-others-on-fail -n dominion,frontend -c blue,green \"nodemon\" \"pnpm build:frontend:dev\"",
+    "build:frontend:dev": "cd src/frontend && pnpm dev",
+    "dev:backend": "nodemon",
+    "start": "node dist/main.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@minions/file-store": "workspace:*",
+    "@minions/lair-config": "workspace:*",
+    "@minions/lair-provisioner": "workspace:*",
+    "@modelcontextprotocol/sdk": "catalog:",
+    "@types/node": "catalog:",
+    "cors": "catalog:",
+    "dotenv": "catalog:",
+    "express": "catalog:",
+    "systray2": "^2.1.4",
+    "open": "^10.1.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/cors": "catalog:",
+    "@types/express": "catalog:",
+    "concurrently": "catalog:",
+    "esbuild": "catalog:",
+    "nodemon": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vite-node": "catalog:",
+    "vitest": "catalog:"
+  }
+}

@@ -1,0 +1,100 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Rule snapshots: file classification > classifies file paths by type 1`] = `
+"File path                                     │ Description                  │ FileType    
+──────────────────────────────────────────────┼──────────────────────────────┼─────────────
+src/foo.ts                                    │ TypeScript source            │ code        
+src/utils/helper.ts                           │ nested source                │ code        
+apps/cabinet/src/server.ts                    │ app source                   │ code        
+libs/file-store/src/index.ts                  │ lib source                   │ code        
+src/foo.test.ts                               │ vitest test                  │ test        
+src/foo.spec.ts                               │ jest-style spec              │ test        
+__tests__/foo.ts                              │ __tests__ directory          │ test        
+src/__tests__/bar.ts                          │ __tests__ nested             │ test        
+test_foo.ts                                   │ test_ prefix                 │ test        
+README.md                                     │ root README                  │ docs        
+docs/guide.md                                 │ docs directory               │ docs        
+docs/api/reference.md                         │ docs subdirectory            │ docs        
+CHANGELOG.md                                  │ changelog                    │ docs        
+src/foo.txt                                   │ .txt file                    │ docs        
+CLAUDE.md                                     │ root CLAUDE.md (workflow)    │ code        
+.claude/CLAUDE.md                             │ .claude/ CLAUDE.md (workflow) │ code        
+work/local/CLAUDE.md                          │ wing work CLAUDE.md (workflow) │ code        
+any/workflow/foo/bar.md                       │ workflow instructions (workflow) │ code        
+any/dev-process/foo/bar.md                    │ workflow instructions (workflow) │ code        
+.claude/foo/bar.md                            │ workflow instructions (workflow) │ code        
+info/overview.md                              │ info dir .md                 │ docs        
+plan/sprint-1.md                              │ plan directory .md           │ plan        
+plans/roadmap.md                              │ plans directory .md          │ plan        
+work/local/plans/q1.md                        │ nested plans .md             │ plan        
+.github/workflows/ci.yml                      │ CI workflow (not .md but yaml) │ code        
+package.json                                  │ package.json                 │ config      
+tsconfig.json                                 │ tsconfig                     │ config      
+tsconfig.base.json                            │ tsconfig.base                │ config      
+vitest.config.ts                              │ vitest config                │ config      
+vite.config.ts                                │ vite config                  │ config      
+.eslintrc                                     │ eslint config                │ config      
+eslint.config.mjs                             │ eslint flat config           │ config      
+.prettierrc                                   │ prettier config              │ config      
+nx.json                                       │ nx config                    │ config      
+project.json                                  │ nx project config            │ config      
+.env                                          │ .env file                    │ config      
+.gitignore                                    │ .gitignore                   │ config      "
+`;
+
+exports[`Rule snapshots: intention classification > classifies intention from tool log entries 1`] = `
+"Scenario                                           │ Intention       
+───────────────────────────────────────────────────┼─────────────────
+no entries                                         │ not_classified  
+read-only tools only                               │ not_classified  
+plan tool only (no edits)                          │ plan            
+plan tool + doc edit                               │ docs            
+plan tool + code edit                              │ code            
+plan tool + test edit                              │ test            
+code edit + test edit                              │ code            
+code edit + no test edit (test run, no test file changes) │ refactor        
+code file edited                                   │ code            
+multiple code files                                │ code            
+test file only                                     │ test            
+test + code                                        │ code            
+docs file only                                     │ docs            
+docs + test                                        │ docs            
+docs + code                                        │ code            
+config file only                                   │ chore           
+config + test                                      │ chore           
+config + docs                                      │ chore           
+config + docs + test                               │ chore           
+CLAUDE.md (classified as code — workflow file)     │ code            
+plan dir .md                                       │ plan            "
+`;
+
+exports[`Rule snapshots: intention merge matrix > produces merged intention from agent × analyzer 1`] = `
+"analyzer ↓  agent → │ feature         │ bug             │ refactor        │ test            │ docs            │ chore           │ plan           
+─────────────┼─────────────────┼─────────────────┼─────────────────┼─────────────────┼─────────────────┼─────────────────┼────────────────
+not_classified │ feature         │ bug             │ refactor        │ test            │ docs            │ chore           │ plan           
+multiple     │ multiple        │ multiple        │ multiple        │ multiple        │ multiple        │ multiple        │ multiple       
+plan         │ feature         │ bug             │ refactor        │ test            │ docs            │ chore           │ plan           
+test         │ feature         │ bug             │ refactor        │ test            │ docs            │ chore           │ test           
+docs         │ feature         │ bug             │ refactor        │ test            │ docs            │ chore           │ docs           
+chore        │ feature         │ bug             │ refactor        │ test            │ docs            │ chore           │ chore          
+code         │ feature         │ bug             │ refactor        │ multiple        │ multiple        │ multiple        │ multiple       "
+`;
+
+exports[`Rule snapshots: risk classification > classifies risk from tool log entries 1`] = `
+"Scenario                                                 │ Risk            
+─────────────────────────────────────────────────────────┼─────────────────
+no entries                                               │ not_classified  
+only reads/search                                        │ not_classified  
+docs edit only                                           │ .               
+test edit only                                           │ ^               
+config edit only                                         │ @               
+code edit, no test run                                   │ @               
+code edit → test run                                     │ !               
+code edit (<9 LOC) + test edit → test run                │ ^               
+code edit → test run → code edit (code after test)       │ @               
+code edit → test run → docs edit (docs after test, not code) │ !               
+code edit → vitest run                                   │ !               
+code edit → jest run                                     │ !               
+code edit → unrelated bash (not a test command)          │ @               
+multiple test runs, last one after all code edits        │ !               "
+`;

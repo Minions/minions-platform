@@ -1,0 +1,24 @@
+{
+  "name": "@minions/quality-watcher-process",
+  "version": "0.1.0",
+  "description": "Standalone process hosting per-wing quality watchers (Vitest/Vue-tsc/Vite build), spoken to by cabinet over plain HTTP",
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/main.ts",
+    "build": "esbuild src/main.ts --bundle --platform=node --format=cjs --outfile=dist/main.cjs --external:tsx",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@minions/events": "workspace:*",
+    "@minions/quality-watcher": "workspace:*",
+    "express": "catalog:"
+  },
+  "devDependencies": {
+    "@types/express": "catalog:",
+    "@types/node": "catalog:",
+    "esbuild": "catalog:",
+    "tsx": "^4.19.0",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

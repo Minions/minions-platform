@@ -1,0 +1,150 @@
+/* Shared styles for FilePathInput and FilePathsInput picker dialog.
+   Not scoped — class names are unique enough to avoid collisions.
+   Teleported to <body>, so scoped attributes wouldn't reach them anyway. */
+
+.picker-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.picker-panel {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  width: min(600px, 90vw);
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.picker-header {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.picker-search {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.picker-search:focus {
+  outline: none;
+  border-color: #7b1fa2;
+  box-shadow: 0 0 0 2px rgba(123, 31, 162, 0.1);
+}
+
+.picker-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #999;
+  font-size: 16px;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.picker-close:hover {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.picker-status {
+  padding: 20px;
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+}
+
+.picker-status--error {
+  color: #c00;
+}
+
+.picker-status--muted {
+  color: #aaa;
+}
+
+.picker-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.picker-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.picker-item.is-active {
+  background: #f3e5f5;
+}
+
+.picker-item.is-selected {
+  background: #ede7f6;
+}
+
+.picker-item.is-active.is-selected {
+  background: #e1d5f0;
+}
+
+.item-name {
+  font-weight: 500;
+  color: #333;
+  flex-shrink: 0;
+}
+
+.item-dir {
+  color: #aaa;
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-check {
+  margin-left: auto;
+  color: #7b1fa2;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.picker-footer {
+  padding: 10px 14px;
+  border-top: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #666;
+}
+
+.done-button {
+  padding: 6px 16px;
+  background: #7b1fa2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.done-button:hover {
+  background: #6a1b9a;
+}

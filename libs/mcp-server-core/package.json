@@ -1,0 +1,40 @@
+{
+  "name": "@minions/mcp-server-core",
+  "version": "0.0.1",
+  "description": "Generic session/transport/action-group mounting core for an MCP server, extracted from apps/cabinet so any application can mount its own type-safe action groups without depending on minions at compile time.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "vite build",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": ["ai", "minions", "mcp"],
+  "author": "Untangler",
+  "license": "None",
+  "dependencies": {
+    "@minions/mcp-types": "workspace:*",
+    "@modelcontextprotocol/sdk": "catalog:",
+    "express": "catalog:"
+  },
+  "devDependencies": {
+    "@types/express": "catalog:",
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "nx": {
+    "tags": ["platform:node"]
+  }
+}

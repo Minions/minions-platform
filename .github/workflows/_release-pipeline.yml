@@ -1,0 +1,283 @@
+name: Release Pipeline (reusable)
+
+# Reusable workflow: builds the Dominion bundle, compiles install-minions binaries
+# for all platforms, and publishes a GitHub Release.
+# Called by release.yml (stable) and preview-release.yml (pre-release).
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: The release tag (e.g. v0.1.0 or v0.2.0-pre)
+        required: true
+        type: string
+      changelog:
+        description: Release notes / changelog body
+        required: true
+        type: string
+      prerelease:
+        description: Mark the GitHub Release as a pre-release
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  # Build the Dominion bundle. Published as a release asset; the install-minions
+  # downloads it via install.minions.tools (a Cloudflare redirect to this asset)
+  # using the versioned URL embedded at compile time.
+  # Also outputs its SHA-256 so the install-minions can verify it before extracting.
+  dominion-bundle:
+    runs-on: ubuntu-latest
+    outputs:
+      sha256: ${{ steps.sha.outputs.hash }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Cache node_modules
+        id: cache-nm
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Install dependencies
+        if: steps.cache-nm.outputs.cache-hit != 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Dominion frontend dependencies
+        run: pnpm install
+        working-directory: apps/dominion/src/frontend
+
+      - name: Build Dominion
+        run: pnpm --filter @minions/dominion build
+
+      - name: Build Cabinet
+        run: pnpm --filter @minions/cabinet build
+
+      - name: Package Dominion bundle
+        run: |
+          cp -r apps/cabinet/dist apps/dominion/dist/cabinet
+          cd apps/dominion
+          zip -r ../../dominion-bundle.zip dist/
+          rm -rf dist/cabinet
+
+      - name: Compute SHA-256
+        id: sha
+        run: echo "hash=$(sha256sum dominion-bundle.zip | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+
+      - name: Upload Dominion bundle
+        uses: actions/upload-artifact@v7
+        with:
+          name: dominion-bundle
+          path: dominion-bundle.zip
+
+  # Download and hash the Volta release assets for all platforms.
+  # These SHAs are embedded at install-minions compile time so it can verify
+  # every Volta file it downloads before running it.
+  # Runs in parallel with dominion-bundle to save time.
+  volta-sha:
+    runs-on: ubuntu-latest
+    outputs:
+      windows: ${{ steps.sha.outputs.windows }}
+      mac_x86: ${{ steps.sha.outputs.mac_x86 }}
+      mac_arm64: ${{ steps.sha.outputs.mac_arm64 }}
+    steps:
+      - name: Checkout (for voltaVersion constant)
+        uses: actions/checkout@v6
+        with:
+          repository: Minions/quartermaster
+          sparse-checkout: launcher.go
+          sparse-checkout-cone-mode: false
+
+      - name: Compute Volta SHA-256 values
+        id: sha
+        run: |
+          V=$(grep '^const voltaVersion' launcher.go | grep -oE '"[0-9.]+"' | tr -d '"')
+          curl -fsSL -o /tmp/volta-windows.zip \
+            "https://github.com/volta-cli/volta/releases/download/v${V}/volta-${V}-windows.zip"
+          curl -fsSL -o /tmp/volta-macos.tar.gz \
+            "https://github.com/volta-cli/volta/releases/download/v${V}/volta-${V}-macos.tar.gz"
+          curl -fsSL -o /tmp/volta-macos-arm64.tar.gz \
+            "https://github.com/volta-cli/volta/releases/download/v${V}/volta-${V}-macos-aarch64.tar.gz"
+          echo "windows=$(sha256sum /tmp/volta-windows.zip | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+          echo "mac_x86=$(sha256sum /tmp/volta-macos.tar.gz | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+          echo "mac_arm64=$(sha256sum /tmp/volta-macos-arm64.tar.gz | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+
+  # Build install-minions binaries for Windows and Linux.
+  # Runs on ubuntu-latest for both targets:
+  #
+  #   Windows (amd64 + arm64): CGO_ENABLED=0 cross-compile.
+  #     Wails uses go-webview2 which is pure Go (Win32 COM via syscall — no CGo).
+  #     -H windowsgui hides the console window entirely.
+  #
+  #   Linux (amd64): CGO_ENABLED=1 native build.
+  #     Wails uses WebKit2GTK via CGo. Build deps installed below.
+  #     Users also need libwebkit2gtk-4.0 at runtime (standard on Ubuntu/Fedora desktops).
+  install-minions-linux-windows:
+    needs: [dominion-bundle, volta-sha]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout installer source (quartermaster)
+        uses: actions/checkout@v6
+        with:
+          repository: Minions/quartermaster
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.mod
+
+      - name: Cache apt packages (GTK3 + WebKit2GTK)
+        id: apt-cache
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          key: apt-${{ runner.os }}-gtk-webkit-v2
+
+      - name: Install Linux CGo build dependencies
+        run: |
+          # Skip apt-get update on cache hit — runner already has package lists.
+          [ "${{ steps.apt-cache.outputs.cache-hit }}" = "true" ] || sudo apt-get update -qq
+          sudo apt-get install -y gcc libgtk-3-dev libwebkit2gtk-4.1-dev pkg-config
+
+      - name: Build install-minions (Windows amd64 + arm64, Linux amd64)
+        env:
+          DOMINION_SHA: ${{ needs.dominion-bundle.outputs.sha256 }}
+          DOMINION_URL: "https://github.com/Minions/quartermaster/releases/download/${{ inputs.tag }}/dominion-bundle.zip"
+          VOLTA_WINDOWS_SHA: ${{ needs.volta-sha.outputs.windows }}
+          VOLTA_MAC_X86_SHA: ${{ needs.volta-sha.outputs.mac_x86 }}
+          VOLTA_MAC_ARM64_SHA: ${{ needs.volta-sha.outputs.mac_arm64 }}
+          GITHUB_OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID_GITHUB }}
+          BITBUCKET_OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID_BITBUCKET }}
+          BITBUCKET_OAUTH_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET_BITBUCKET }}
+          GITLAB_OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID_GITLAB }}
+        run: |
+          mkdir -p output
+
+          BASE_LDFLAGS="-s -w \
+            -X main.dominionBundleSHA256=${DOMINION_SHA} \
+            -X main.dominionBundleURL=${DOMINION_URL} \
+            -X main.voltaWindowsSHA256=${VOLTA_WINDOWS_SHA} \
+            -X main.voltaMacX86SHA256=${VOLTA_MAC_X86_SHA} \
+            -X main.voltaMacARM64SHA256=${VOLTA_MAC_ARM64_SHA} \
+            -X main.githubClientID=${GITHUB_OAUTH_CLIENT_ID} \
+            -X main.bitbucketClientID=${BITBUCKET_OAUTH_CLIENT_ID} \
+            -X main.bitbucketClientSecret=${BITBUCKET_OAUTH_CLIENT_SECRET} \
+            -X main.gitlabClientID=${GITLAB_OAUTH_CLIENT_ID}"
+
+          # Windows: pure Go, no CGo. -H windowsgui suppresses the console window.
+          WIN_LDFLAGS="${BASE_LDFLAGS} -H windowsgui"
+          GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -tags desktop,production -ldflags="${WIN_LDFLAGS}" -o output/install-minions-windows-amd64.exe . &
+          GOOS=windows GOARCH=arm64 CGO_ENABLED=0 go build -tags desktop,production -ldflags="${WIN_LDFLAGS}" -o output/install-minions-windows-arm64.exe . &
+
+          # Linux: CGo required for WebKit2GTK (headers installed above).
+          # webkit2_41 selects the webkit2gtk-4.1 API (Ubuntu 24.04+).
+          GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build -tags desktop,production,webkit2_41 -ldflags="${BASE_LDFLAGS}" -o output/install-minions-linux-amd64 . &
+
+          wait
+
+      - name: Upload Windows + Linux binaries
+        uses: actions/upload-artifact@v7
+        with:
+          name: install-minions-linux-windows
+          path: output/
+
+  # Build install-minions binaries for macOS.
+  # Must run on a macOS runner: Wails uses WKWebView via Objective-C CGo bindings
+  # which cannot be cross-compiled from Linux.
+  #
+  # macos-latest is Apple Silicon (arm64). We cross-compile amd64 from arm64
+  # using Xcode's universal SDK (clang -arch x86_64), which is pre-installed
+  # on all macOS GitHub Actions runners.
+  install-minions-darwin:
+    needs: [dominion-bundle, volta-sha]
+    runs-on: macos-latest
+    steps:
+      - name: Checkout installer source (quartermaster)
+        uses: actions/checkout@v6
+        with:
+          repository: Minions/quartermaster
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.mod
+
+      - name: Build install-minions (macOS arm64 + amd64)
+        env:
+          DOMINION_SHA: ${{ needs.dominion-bundle.outputs.sha256 }}
+          DOMINION_URL: "https://github.com/Minions/quartermaster/releases/download/${{ inputs.tag }}/dominion-bundle.zip"
+          VOLTA_WINDOWS_SHA: ${{ needs.volta-sha.outputs.windows }}
+          VOLTA_MAC_X86_SHA: ${{ needs.volta-sha.outputs.mac_x86 }}
+          VOLTA_MAC_ARM64_SHA: ${{ needs.volta-sha.outputs.mac_arm64 }}
+          GITHUB_OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID_GITHUB }}
+          BITBUCKET_OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID_BITBUCKET }}
+          BITBUCKET_OAUTH_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET_BITBUCKET }}
+          GITLAB_OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID_GITLAB }}
+        run: |
+          mkdir -p output
+
+          LDFLAGS="-s -w \
+            -X main.dominionBundleSHA256=${DOMINION_SHA} \
+            -X main.dominionBundleURL=${DOMINION_URL} \
+            -X main.voltaWindowsSHA256=${VOLTA_WINDOWS_SHA} \
+            -X main.voltaMacX86SHA256=${VOLTA_MAC_X86_SHA} \
+            -X main.voltaMacARM64SHA256=${VOLTA_MAC_ARM64_SHA} \
+            -X main.githubClientID=${GITHUB_OAUTH_CLIENT_ID} \
+            -X main.bitbucketClientID=${BITBUCKET_OAUTH_CLIENT_ID} \
+            -X main.bitbucketClientSecret=${BITBUCKET_OAUTH_CLIENT_SECRET} \
+            -X main.gitlabClientID=${GITLAB_OAUTH_CLIENT_ID}"
+
+          # arm64 — native on the macos-latest runner (Apple Silicon).
+          GOOS=darwin GOARCH=arm64 CGO_ENABLED=1 \
+            go build -tags desktop,production -ldflags="${LDFLAGS}" -o output/install-minions-darwin-arm64 . &
+
+          # amd64 — cross-compiled from arm64 via Xcode's universal SDK.
+          GOOS=darwin GOARCH=amd64 CGO_ENABLED=1 \
+            CC="clang -arch x86_64" CGO_LDFLAGS="-arch x86_64" \
+            go build -tags desktop,production -ldflags="${LDFLAGS}" -o output/install-minions-darwin-amd64 . &
+
+          wait
+
+      - name: Upload macOS binaries
+        uses: actions/upload-artifact@v7
+        with:
+          name: install-minions-darwin
+          path: output/
+
+  # Collect all artifacts and publish the GitHub Release to Minions/quartermaster.
+  # Uses QUARTERMASTER_PAT (a PAT with contents:write on Minions/quartermaster).
+  publish:
+    needs: [install-minions-linux-windows, install-minions-darwin]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.QUARTERMASTER_PAT }}
+          repository: Minions/quartermaster
+          tag_name: ${{ inputs.tag }}
+          body: ${{ inputs.changelog }}
+          prerelease: ${{ inputs.prerelease }}
+          files: |
+            artifacts/install-minions-linux-windows/install-minions-windows-amd64.exe
+            artifacts/install-minions-linux-windows/install-minions-windows-arm64.exe
+            artifacts/install-minions-linux-windows/install-minions-linux-amd64
+            artifacts/install-minions-darwin/install-minions-darwin-arm64
+            artifacts/install-minions-darwin/install-minions-darwin-amd64
+            artifacts/dominion-bundle/dominion-bundle.zip

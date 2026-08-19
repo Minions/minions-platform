@@ -1,0 +1,21 @@
+{
+  "name": "costume-management",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "costumes/costume-management/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "command": "node ../../libs/costumes/src/build-costume.cjs",
+        "cwd": "{projectRoot}"
+      },
+      "inputs": [
+        "{projectRoot}/src/**/*",
+        "{workspaceRoot}/libs/costumes/src/build-costume.cjs"
+      ],
+      "outputs": ["{projectRoot}/dist"]
+    }
+  }
+}

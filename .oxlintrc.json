@@ -1,0 +1,23 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc", "vue"],
+  "rules": {
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
+    "typescript/no-explicit-any": "warn",
+    "typescript/no-non-null-assertion": "warn",
+    "no-empty-function": "error",
+    "typescript/no-inferrable-types": "error",
+    "typescript/no-empty-interface": "error",
+    "typescript/adjacent-overload-signatures": "error",
+    "typescript/prefer-namespace-keyword": "error",
+    "typescript/no-var-requires": "off",
+    "typescript/no-require-imports": "off"
+  },
+  "ignorePatterns": [
+    "**/dist",
+    "**/vite.config.*.timestamp*",
+    "**/vitest.config.*.timestamp*",
+    "**/test-output",
+    "apps/cabinet/src/throne-room"
+  ]
+}
