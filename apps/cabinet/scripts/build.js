@@ -214,6 +214,21 @@ async function buildProductionQualityWatcherFactory() {
     external: [...builtinModules, ...builtinModules.map((m) => `node:${m}`)],
     sourcemap: true,
     minify: false,
+    // Must match the main bundle's own `define` block: without these baked
+    // in, ensureFallbackOxlint.ts's resolveVersionPins() falls back to
+    // computing a workspace package.json path relative to this file's own
+    // location — a fallback meant only for running unbundled straight out of
+    // src/. That fallback happens to still resolve correctly from this
+    // monorepo's own dist/ (same directory depth as src/), which is exactly
+    // why omitting this went unnoticed here — but create-lair-package.js
+    // flattens dist/* into <lair>/tools/runtime/*, four directories
+    // shallower than any real workspace root, so the same relative lookup
+    // silently escapes the deployed lair package and fails to find any
+    // package.json at all.
+    define: {
+      __WORKSPACE_PNPM_PACKAGE_MANAGER__: JSON.stringify(workspacePnpmPackageManager),
+      __WORKSPACE_OXLINT_VERSION_RANGE__: JSON.stringify(workspaceOxlintVersionRange),
+    },
     banner: {
       js: cjsInteropBanner,
     },
