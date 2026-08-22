@@ -1,7 +1,7 @@
 {
   "name": "@minions/quality-watcher",
   "version": "0.1.0",
-  "description": "Quality monitoring system for watching tests, types, lint, and build status",
+  "description": "The Platform-generic IQualityWatcher/QualityWatcherFactory interface for the quality monitoring system that watches tests, types, lint, and build status — concrete implementations (real vitest/tsc/oxlint spawning) are software-development-domain tooling and live outside this open-source package.",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -30,19 +30,14 @@
   "author": "Untangler",
   "license": "None",
   "dependencies": {
-    "@minions/events": "workspace:*",
-    "@minions/file-store": "workspace:*",
-    "cross-spawn": "^7.0.6",
-    "effect": "catalog:",
-    "eslint": "^9.8.0",
-    "typescript": "catalog:",
-    "vite": "catalog:",
-    "vitest": "catalog:"
+    "@minions/events": "workspace:*"
   },
   "devDependencies": {
-    "@types/cross-spawn": "^6.0.6",
     "@types/node": "catalog:",
-    "typescript-eslint": "^8.19.0"
+    "typescript": "catalog:",
+    "typescript-eslint": "^8.19.0",
+    "vite": "catalog:",
+    "vitest": "catalog:"
   },
   "nx": {
     "tags": ["platform:node"]

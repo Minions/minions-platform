@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MCPServer } from './MCPServer.js';
-import { MockQualityWatcher, RemoteQualityWatcher, type QualityStatus, type WingQualityWatcher, type IQualityWatcher, SignalType } from '@minions/quality-watcher';
+import { MockQualityWatcher, type QualityStatus, type IQualityWatcher, SignalType } from '@minions/quality-watcher';
 import { QualityWatcherProcessClient, type SpawnedProcess } from '../quality/QualityWatcherProcessClient.js';
 import { QualityWedgeBackstop } from '../quality/QualityWedgeBackstop.js';
 
@@ -250,7 +250,7 @@ describe('MCPServer', () => {
     it('does not wait forever for a quality watcher whose stop() never resolves', async () => {
       vi.useFakeTimers();
       try {
-        const stuckWatcher = { stop: () => new Promise<void>(() => undefined) } as unknown as WingQualityWatcher;
+        const stuckWatcher = { stop: () => new Promise<void>(() => undefined) } as unknown as IQualityWatcher;
         mcpServer['qualityWatchers'].set('stuck-wing', stuckWatcher);
 
         const shutdownPromise = mcpServer.shutdown();
@@ -270,7 +270,7 @@ describe('MCPServer', () => {
     });
 
     it('resolves promptly when every quality watcher stops cleanly', async () => {
-      const fastWatcher = { stop: () => Promise.resolve() } as unknown as WingQualityWatcher;
+      const fastWatcher = { stop: () => Promise.resolve() } as unknown as IQualityWatcher;
       mcpServer['qualityWatchers'].set('fast-wing', fastWatcher);
 
       await expect(mcpServer.shutdown()).resolves.toBeUndefined();
@@ -302,35 +302,59 @@ describe('MCPServer', () => {
       await expect(mcpServer['resumeQualityWatcher']('no-such-wing')).resolves.toBeUndefined();
     });
 
-    it('is a no-op for a wing whose watcher is not a RemoteQualityWatcher (e.g. the old in-process WingQualityWatcher)', async () => {
-      const pause = vi.fn();
-      const resume = vi.fn();
-      const oldStyleWatcher = { pause, resume } as unknown as WingQualityWatcher;
+    it('is a no-op for a watcher that does not support pause/resume (e.g. the old in-process WingQualityWatcher)', async () => {
+      const oldStyleWatcher: IQualityWatcher = {
+        wingName: 'old-style-wing',
+        start: async () => undefined,
+        stop: async () => undefined,
+        getStatus: () => new MockQualityWatcher('old-style-wing').getStatus(),
+        isRunning: () => true,
+        awaitStatus: async () => new MockQualityWatcher('old-style-wing').getStatus(),
+        // Deliberately no pause/resume — the structural marker
+        // pauseQualityWatcher/resumeQualityWatcher check for.
+      };
       mcpServer['qualityWatchers'].set('old-style-wing', oldStyleWatcher);
 
-      await mcpServer['pauseQualityWatcher']('old-style-wing');
-      await mcpServer['resumeQualityWatcher']('old-style-wing');
-
-      expect(pause).not.toHaveBeenCalled();
-      expect(resume).not.toHaveBeenCalled();
+      await expect(mcpServer['pauseQualityWatcher']('old-style-wing')).resolves.toBeUndefined();
+      await expect(mcpServer['resumeQualityWatcher']('old-style-wing')).resolves.toBeUndefined();
     });
 
-    it('calls pause()/resume() on a real RemoteQualityWatcher for the wing', async () => {
-      const fetchImpl = vi.fn().mockResolvedValue({ ok: true, status: 200, json: () => Promise.resolve({}) });
-      const remote = new RemoteQualityWatcher('remote-wing', 'http://127.0.0.1:1', {}, fetchImpl as unknown as typeof fetch);
-      mcpServer['qualityWatchers'].set('remote-wing', remote);
+    it('calls pause()/resume() on a watcher that supports them', async () => {
+      const pause = vi.fn(async () => undefined);
+      const resume = vi.fn(async () => undefined);
+      const remoteLike: IQualityWatcher = {
+        wingName: 'remote-wing',
+        start: async () => undefined,
+        stop: async () => undefined,
+        getStatus: () => new MockQualityWatcher('remote-wing').getStatus(),
+        isRunning: () => true,
+        awaitStatus: async () => new MockQualityWatcher('remote-wing').getStatus(),
+        pause,
+        resume,
+      };
+      mcpServer['qualityWatchers'].set('remote-wing', remoteLike);
 
       await mcpServer['pauseQualityWatcher']('remote-wing');
       await mcpServer['resumeQualityWatcher']('remote-wing');
 
-      expect(fetchImpl).toHaveBeenCalledWith('http://127.0.0.1:1/wings/remote-wing/pause', { method: 'POST' });
-      expect(fetchImpl).toHaveBeenCalledWith('http://127.0.0.1:1/wings/remote-wing/resume', { method: 'POST' });
+      expect(pause).toHaveBeenCalledTimes(1);
+      expect(resume).toHaveBeenCalledTimes(1);
     });
 
-    it('swallows a RemoteQualityWatcher pause()/resume() failure rather than throwing', async () => {
-      const fetchImpl = vi.fn().mockResolvedValue({ ok: false, status: 500, json: () => Promise.resolve({ error: 'boom' }) });
-      const remote = new RemoteQualityWatcher('flaky-wing', 'http://127.0.0.1:1', {}, fetchImpl as unknown as typeof fetch);
-      mcpServer['qualityWatchers'].set('flaky-wing', remote);
+    it('swallows a pause()/resume() failure rather than throwing', async () => {
+      const pause = vi.fn(async () => { throw new Error('boom'); });
+      const resume = vi.fn(async () => { throw new Error('boom'); });
+      const flaky: IQualityWatcher = {
+        wingName: 'flaky-wing',
+        start: async () => undefined,
+        stop: async () => undefined,
+        getStatus: () => new MockQualityWatcher('flaky-wing').getStatus(),
+        isRunning: () => true,
+        awaitStatus: async () => new MockQualityWatcher('flaky-wing').getStatus(),
+        pause,
+        resume,
+      };
+      mcpServer['qualityWatchers'].set('flaky-wing', flaky);
 
       await expect(mcpServer['pauseQualityWatcher']('flaky-wing')).resolves.toBeUndefined();
       await expect(mcpServer['resumeQualityWatcher']('flaky-wing')).resolves.toBeUndefined();

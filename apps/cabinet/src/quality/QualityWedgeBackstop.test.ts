@@ -1,9 +1,30 @@
 import { describe, it, expect, vi } from 'vitest';
-import { SignalType, RemoteQualityWatcher, allPendingQualityStatus, toWireQualityStatus, type QualityStatus, type IQualityWatcher } from '@minions/quality-watcher';
+import { SignalType, allPendingQualityStatus, type QualityStatus, type IQualityWatcher } from '@minions/quality-watcher';
 import { QualityWedgeBackstop, findStuckSignals } from './QualityWedgeBackstop.js';
 
 function statusWith(overrides: Partial<Record<SignalType, QualityStatus[SignalType]>>, now: Date): QualityStatus {
   return { ...allPendingQualityStatus(now), ...overrides };
+}
+
+/**
+ * A minimal `IQualityWatcher` that supports `pause`/`resume` — the
+ * structural marker `QualityWedgeBackstop` uses to tell a watcher whose real
+ * state lives in another process (what `RemoteQualityWatcher` is, in
+ * production) apart from one that doesn't (the old in-process
+ * `WingQualityWatcher`). `awaitStatus`/`getStatus` both just return whatever
+ * `status` was constructed with, standing in for a real HTTP round trip.
+ */
+function makeRemoteLikeWatcher(wingName: string, status: QualityStatus): IQualityWatcher {
+  return {
+    wingName,
+    start: async () => undefined,
+    stop: async () => undefined,
+    pause: async () => undefined,
+    resume: async () => undefined,
+    isRunning: () => true,
+    getStatus: () => status,
+    awaitStatus: async () => status,
+  };
 }
 
 describe('findStuckSignals', () => {
@@ -64,15 +85,11 @@ function fakeFetch(handler: (url: string, init?: RequestInit) => { ok: boolean; 
 }
 
 describe('QualityWedgeBackstop', () => {
-  it('check() refreshes every running RemoteQualityWatcher and sends /unwedge for each stuck signal it finds', async () => {
+  it('check() refreshes every running remote-like watcher and sends /unwedge for each stuck signal it finds', async () => {
     const now = new Date('2026-01-01T00:02:00Z');
-    const wireStuck = toWireQualityStatus(
-      statusWith({ [SignalType.Tests]: { state: 'running', timestamp: new Date('2026-01-01T00:00:00Z'), failures: [] } }, now),
-    );
+    const stuckStatus = statusWith({ [SignalType.Tests]: { state: 'running', timestamp: new Date('2026-01-01T00:00:00Z'), failures: [] } }, now);
     const unwedgeCalls: Array<{ url: string; body: unknown }> = [];
-    const watcherFetch = fakeFetch(() => ({ ok: true, status: 200, body: wireStuck }));
-    const watcher = new RemoteQualityWatcher('wing-a', 'http://127.0.0.1:1111', {}, watcherFetch);
-    watcher.isRunning = () => true;
+    const watcher = makeRemoteLikeWatcher('wing-a', stuckStatus);
     const backstopFetch = fakeFetch((url, init) => {
       unwedgeCalls.push({ url, body: init?.body ? JSON.parse(init.body as string) : undefined });
       return { ok: true, status: 200, body: { ok: true, results: [] } };
@@ -87,9 +104,7 @@ describe('QualityWedgeBackstop', () => {
 
   it('never calls /unwedge when nothing looks stuck — no wasted requests', async () => {
     const now = new Date('2026-01-01T00:00:05Z');
-    const watcherFetch = fakeFetch(() => ({ ok: true, status: 200, body: toWireQualityStatus(allPendingQualityStatus(now)) }));
-    const watcher = new RemoteQualityWatcher('wing-a', 'http://127.0.0.1:1111', {}, watcherFetch);
-    watcher.isRunning = () => true;
+    const watcher = makeRemoteLikeWatcher('wing-a', allPendingQualityStatus(now));
     const getBaseUrl = vi.fn(async () => 'http://127.0.0.1:2222');
     const backstopFetch = vi.fn();
     const watchers = new Map<string, IQualityWatcher>([['wing-a', watcher]]);

@@ -113,4 +113,22 @@ export interface IQualityWatcher {
    * @returns Quality status reflecting the latest known state
    */
   awaitStatus(maxWaitMs?: number, treatWarningsAsWarnings?: boolean): Promise<QualityStatus>;
+
+  /**
+   * Suspend monitoring without tearing down state, for a caller that knows a
+   * burst of irrelevant churn is coming (e.g. cabinet pausing around a
+   * `movement start`/`merge`/`promote` git operation). Not part of every
+   * watcher's contract: only meaningful for a watcher whose real state lives
+   * in another process it can ask to pause — an in-process watcher already
+   * has its own autonomous git-operation pause and has nothing to gain from
+   * this. Callers detect support structurally (`typeof watcher.pause ===
+   * 'function'`), not by importing any concrete watcher class — that
+   * structural check is the only thing that distinguishes "this watcher
+   * supports pause/resume" from "this watcher doesn't," so implementers that
+   * support it must supply both `pause` and `resume` together.
+   */
+  pause?(): Promise<void>;
+
+  /** The `resume()` counterpart to `pause()` — see its doc comment. */
+  resume?(): Promise<void>;
 }

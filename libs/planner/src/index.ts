@@ -42,4 +42,4 @@ export {
 export { handlePlanTool } from './PlanTool.js';
 export type { PlanToolResult } from './PlanTool.js';
 
-export { createPlanActionGroup, resolvePlanDir } from './PlanActionGroup.js';
+export { createPlanActionGroup, resolvePlanDir, setQualityWatcherFactory } from './PlanActionGroup.js';

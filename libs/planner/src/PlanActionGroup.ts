@@ -16,7 +16,7 @@ import { createLair, asWingName, asRepoAlias, asLairRepoName, resolveMovementBas
 import type { Sandbox, Worktree, File, MutableDirectoryLike, Directory, WorkArea, Mirror } from '@minions/file-store';
 import { MovementSession, MirrorCommit } from '@minions/movement-branching';
 import type { AbsorbPlanResult } from '@minions/movement-branching';
-import { QualityWatcher, GLOBAL_SIGNALS } from '@minions/quality-watcher';
+import type { IQualityWatcher, QualityWatcherFactory } from '@minions/quality-watcher';
 import { WingPerspective, LairRepoPerspective, refreshTrunkFromOrigin } from '@minions/repo-perspective';
 import type { KeyedQueue } from '@minions/scheduling';
 import { WorktreePlanStore } from './adapters/worktree/WorktreePlanStore.js';
@@ -352,32 +352,53 @@ function describePlanActionParams(params: Record<string, unknown>): string {
 }
 
 /**
- * One `QualityWatcher` per plan mirror worktree, running only
- * `GLOBAL_SIGNALS` (currently empty — see that constant's own doc) — the
- * cabinet's own docs/plan writes never run software-dev tooling
- * (tests/types/build/lint) the way a wing's own watcher does. Cached for the
- * process lifetime, keyed by the mirror's own worktree path (stable per
- * lair-registered repo) — mirrors `MCPServer.getOrCreateQualityWatcher`'s
- * per-wing caching, kept local to this module rather than threaded through
- * `ActionContext` since the mirror (and so its path) is already fully
- * resolved by the time `mirrorCommit()` runs, with nothing at the cabinet's
- * dispatch layer needing to know this watcher exists. Deliberately never
- * stopped on process shutdown, unlike `MCPServer.shutdown()`'s per-wing
- * teardown — plain process exit is enough here (global-category signals
- * aren't expected to spawn long-lived subprocesses the way tests/types/build
- * do), so there's nothing worth the extra lifecycle wiring.
+ * The real `QualityWatcherFactory`, injected once from the cabinet's own
+ * composition root (`server.ts`, mirroring `MCPServer`'s own
+ * `qualityWatcherFactory` seam — see that field's doc comment for the
+ * `IHatchery`/`ProductionHatchery`-shaped reasoning) — this module never
+ * imports `@minions/quality-watcher`'s concrete adapters directly. Undefined
+ * by default (e.g. in every in-memory-fixture test in this file, and in any
+ * checkout that doesn't carry the cabinet's production composition file), in
+ * which case `getCabinetQualityWatcher` degrades to "no watcher available",
+ * the same graceful degrade it already gives a real watcher that fails to
+ * start.
  */
-const cabinetQualityWatchers = new Map<string, QualityWatcher>();
+let qualityWatcherFactory: QualityWatcherFactory | undefined;
+
+/** Called once from `server.ts` at startup. See `qualityWatcherFactory`'s doc comment. */
+export function setQualityWatcherFactory(factory: QualityWatcherFactory | undefined): void {
+  qualityWatcherFactory = factory;
+}
 
 /**
- * Returns `undefined` (never throws) when `mirror`'s worktree isn't a real
- * filesystem path `QualityWatcher.start()` can `fs.watch()` — e.g. an
- * in-memory sandbox, the only kind the in-memory-fixture tests in this file
- * use. `MirrorCommit` already treats a missing watcher as "nothing to gate
- * on," the same graceful degrade `WingQualityWatcher` gives one repo's
- * watcher failing to start without taking any other repo down with it.
+ * One watcher per plan mirror worktree, running only `GLOBAL_SIGNALS`
+ * (currently empty — see that constant's own doc) — the cabinet's own
+ * docs/plan writes never run software-dev tooling (tests/types/build/lint)
+ * the way a wing's own watcher does. Cached for the process lifetime, keyed
+ * by the mirror's own worktree path (stable per lair-registered repo) —
+ * mirrors `MCPServer.getOrCreateQualityWatcher`'s per-wing caching, kept
+ * local to this module rather than threaded through `ActionContext` since
+ * the mirror (and so its path) is already fully resolved by the time
+ * `mirrorCommit()` runs, with nothing at the cabinet's dispatch layer
+ * needing to know this watcher exists. Deliberately never stopped on
+ * process shutdown, unlike `MCPServer.shutdown()`'s per-wing teardown —
+ * plain process exit is enough here (global-category signals aren't
+ * expected to spawn long-lived subprocesses the way tests/types/build do),
+ * so there's nothing worth the extra lifecycle wiring.
  */
-async function getCabinetQualityWatcher(mirror: Mirror): Promise<QualityWatcher | undefined> {
+const cabinetQualityWatchers = new Map<string, IQualityWatcher>();
+
+/**
+ * Returns `undefined` (never throws) when there's no injected factory, or
+ * when `mirror`'s worktree isn't a real filesystem path the real watcher can
+ * `fs.watch()` — e.g. an in-memory sandbox, the only kind the in-memory-
+ * fixture tests in this file use. `MirrorCommit` already treats a missing
+ * watcher as "nothing to gate on," the same graceful degrade `WingQualityWatcher`
+ * gives one repo's watcher failing to start without taking any other repo
+ * down with it.
+ */
+async function getCabinetQualityWatcher(mirror: Mirror): Promise<IQualityWatcher | undefined> {
+  if (!qualityWatcherFactory) return undefined;
   const cwd = mirror.files.path;
   const cached = cabinetQualityWatchers.get(cwd);
   if (cached) {
@@ -390,7 +411,7 @@ async function getCabinetQualityWatcher(mirror: Mirror): Promise<QualityWatcher 
     }
   }
 
-  const watcher = new QualityWatcher('cabinet', cwd, undefined, { signals: GLOBAL_SIGNALS });
+  const watcher = qualityWatcherFactory.createGlobalSignalsWatcher('cabinet', cwd);
   try {
     await watcher.start();
   } catch {

@@ -31,13 +31,12 @@ import { ClosetMissionLoader } from '@minions/conductor';
 import type { MissionSummary_ } from '@minions/mcp-types';
 import { CabinetQuestionBridge } from '../missions/CabinetQuestionBridge.js';
 import { getQuestionQueue } from '../questions/QuestionQueue.js';
-import { WingQualityWatcher, RemoteQualityWatcher, createOxlintProcess, buildQualityStreamPayload, type ProcessRunner, type IQualityWatcher, type QualityStreamPayload } from '@minions/quality-watcher';
+import { buildQualityStreamPayload, type IQualityWatcher, type QualityStreamPayload, type QualityWatcherFactory } from '@minions/quality-watcher';
 import { QualityWatcherProcessClient, type CrashInfo, type RespawnInfo } from '../quality/QualityWatcherProcessClient.js';
 import { QualityWedgeBackstop } from '../quality/QualityWedgeBackstop.js';
 import { CommitCoordinator } from '@minions/movement-branching';
 import { GitCoordinationState } from '@minions/file-store';
 import { KeyedQueue } from '@minions/scheduling';
-import { createFallbackOxlint } from '../quality/ensureFallbackOxlint.js';
 import type { ActionGroupDef } from '@minions/mcp-types';
 import { readAccessoriesFile, readClosetCostumes, resolveExternalServers } from '@minions/wardrobe';
 import { McpProxy, SERVER_NAME_SEPARATOR } from './McpProxy.js';
@@ -167,15 +166,19 @@ export class MCPServer {
    */
   readonly mirrorOpLock = new KeyedQueue();
   /**
-   * Oxlint process runner shared by every wing's quality watcher, wired up
-   * once `lairRoot` is known (see initialize()). Lints a work repo's own
-   * oxlint+config if it has one; otherwise falls back to Cabinet's own
-   * lazily-installed oxlint (see ensureFallbackOxlint.ts) — one shared
-   * install per lair, not per wing or per repo, since createFallbackOxlint's
-   * `ensureBinary()` memoizes internally and this same ProcessRunner closure
-   * is handed to every QualityWatcher.
+   * Constructs every real `IQualityWatcher` this server hands out — the one
+   * seam between this class (which only ever depends on `IQualityWatcher`)
+   * and `@minions/quality-watcher`'s concrete, software-development-domain
+   * implementations. Injected from `server.ts`'s composition root (see
+   * `productionQualityWatcherFactory.ts`), the same
+   * `IHatchery`/`ProductionHatchery` shape `productionHatchery` uses above.
+   * Undefined in a checkout that doesn't carry that composition file (e.g. a
+   * `minions-platform`-only extraction) — every caller below already
+   * tolerates "no watcher available" for other reasons (a watcher failing to
+   * start, `HACK_OFF_QUALITY_CHECKS`), so a missing factory degrades the
+   * same way.
    */
-  private oxlintProcess?: ProcessRunner;
+  private qualityWatcherFactory?: QualityWatcherFactory;
   /**
    * The single place MCP session lifecycle is registered — the core's
    * session-initialized/session-closed hooks call only this, and it's the
@@ -311,11 +314,12 @@ export class MCPServer {
     sandbox?: Sandbox,
     wingsDir?: Directory,
     moduleLoader?: (url: string) => Promise<Record<string, unknown>>,
-    identity?: ServerIdentityInput
+    identity?: ServerIdentityInput,
+    qualityWatcherFactory?: QualityWatcherFactory
   ): void {
     this.wingManager = wingManager;
     this.lairRoot = lairRoot;
-    this.oxlintProcess = lairRoot ? createOxlintProcess({ fallback: createFallbackOxlint(lairRoot) }) : undefined;
+    this.qualityWatcherFactory = qualityWatcherFactory;
     this.lair = lair;
     this.minionManager = minionManager;
     this.productionHatchery = productionHatchery;
@@ -1389,6 +1393,9 @@ export class MCPServer {
    * first and never reaches this call.
    */
   private async getOrCreateQualityWatcher(wingName: string, wing?: Wing): Promise<IQualityWatcher | undefined> {
+    const factory = this.qualityWatcherFactory;
+    if (!factory) return undefined;
+
     if (FF().HIGHER_PERF_QUALITY_WATCHER) {
       let remoteWatcher = this.qualityWatchers.get(wingName);
       if (!remoteWatcher) {
@@ -1398,7 +1405,7 @@ export class MCPServer {
           this.qualityWatcherProcessClient.ensureStarted(),
           this.getWorkRepoPaths(resolvedWing),
         ]);
-        remoteWatcher = new RemoteQualityWatcher(wingName, baseUrl, workRepoPaths);
+        remoteWatcher = factory.createRemoteWatcher(wingName, baseUrl, workRepoPaths);
         this.qualityWatchers.set(wingName, remoteWatcher);
       }
       if (!remoteWatcher.isRunning()) {
@@ -1413,7 +1420,7 @@ export class MCPServer {
       const resolvedWing = wing ?? this.wingManager?.getWing(wingName);
       if (!resolvedWing) throw new Error(`Wing not found: ${wingName}`);
       const workRepoPaths = await this.getWorkRepoPaths(resolvedWing);
-      watcher = new WingQualityWatcher(wingName, workRepoPaths, undefined, { oxlintProcess: this.oxlintProcess });
+      watcher = factory.createWingWatcher(wingName, workRepoPaths);
       this.qualityWatchers.set(wingName, watcher);
     }
     if (!watcher.isRunning()) {
@@ -1474,7 +1481,7 @@ export class MCPServer {
    */
   private async pauseQualityWatcher(wingName: string): Promise<void> {
     const watcher = this.qualityWatchers.get(wingName);
-    if (!(watcher instanceof RemoteQualityWatcher)) return;
+    if (!watcher?.pause) return;
     try {
       await watcher.pause();
     } catch (err) {
@@ -1485,7 +1492,7 @@ export class MCPServer {
   /** See `pauseQualityWatcher`'s doc comment — the resume counterpart. */
   private async resumeQualityWatcher(wingName: string): Promise<void> {
     const watcher = this.qualityWatchers.get(wingName);
-    if (!(watcher instanceof RemoteQualityWatcher)) return;
+    if (!watcher?.resume) return;
     try {
       await watcher.resume();
     } catch (err) {

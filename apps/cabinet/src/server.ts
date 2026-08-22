@@ -11,7 +11,8 @@ import { ClosetExtensionLoader } from '@minions/costumes';
 import { MCPServer } from './mcp/MCPServer.js';
 import type { EndpointName } from './mcp/ToolRegistry.js';
 import { initFlags } from '@minions/feature-flags';
-import { createPlanActionGroup } from '@minions/planner';
+import { createPlanActionGroup, setQualityWatcherFactory } from '@minions/planner';
+import type { QualityWatcherFactory } from '@minions/quality-watcher';
 import { movementActionGroup } from '@minions/minions-runtime-core';
 import { createCostumesActionGroup, createRegistryActionGroup } from '@minions/wardrobe';
 import { createDocsActionGroup } from './docs/DocsActionGroup.js';
@@ -572,6 +573,25 @@ export async function createServer(options: CreateServerOptions | string = {}): 
     app.locals.lairDir = lairDir;
     app.locals.wingsDir = wingsDir;
 
+    // The real QualityWatcherFactory (see MCPServer's `qualityWatcherFactory`
+    // field doc comment): imported dynamically, via a non-literal specifier
+    // TypeScript can't resolve at compile time, so this file type-checks
+    // identically whether or not the production composition file is present
+    // in this checkout. It won't be in a `minions-platform`-only extraction
+    // (see docs/design/repo-split-analysis.md) — every consumer of the
+    // factory already tolerates `undefined` as "no watcher available".
+    let qualityWatcherFactory: QualityWatcherFactory | undefined;
+    try {
+      const modulePath = './quality/productionQualityWatcherFactory.js';
+      const mod = (await import(modulePath)) as {
+        createProductionQualityWatcherFactory: (lairRoot: string) => QualityWatcherFactory;
+      };
+      qualityWatcherFactory = mod.createProductionQualityWatcherFactory(lairRoot);
+    } catch {
+      // Not available in this checkout — quality watching stays off.
+    }
+    setQualityWatcherFactory(qualityWatcherFactory);
+
     // Initialize MCP server with dependencies
     mcpServer.initialize(
       wingManager,
@@ -582,7 +602,8 @@ export async function createServer(options: CreateServerOptions | string = {}): 
       sandbox,
       wingsDir,
       opts.moduleLoader,
-      { isDevMode: opts.isDevMode ?? false, version: opts.version ?? 'unknown', wingName: opts.wingName }
+      { isDevMode: opts.isDevMode ?? false, version: opts.version ?? 'unknown', wingName: opts.wingName },
+      qualityWatcherFactory
     );
 
     // Shared verification browser: one Chrome per lair, owned by the cabinet.

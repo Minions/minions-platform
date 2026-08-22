@@ -23,7 +23,7 @@
  * (e.g. CustomLint mid-run) is always a no-op there, regardless of how
  * coarse cabinet's own guess was.
  */
-import { SignalType, RemoteQualityWatcher, type IQualityWatcher, type QualityStatus } from '@minions/quality-watcher';
+import { SignalType, type IQualityWatcher, type QualityStatus } from '@minions/quality-watcher';
 
 /**
  * How long a `running`/`pending` signal may sit at the same timestamp before
@@ -77,8 +77,15 @@ export function findStuckSignals(
   return stuck;
 }
 
-function isRunningRemoteWatcher(watcher: IQualityWatcher): watcher is RemoteQualityWatcher {
-  return watcher instanceof RemoteQualityWatcher && watcher.isRunning();
+/**
+ * Structural check for "a running watcher whose real state lives in another
+ * process" — every such watcher supports `pause()`/`resume()` (see
+ * `IQualityWatcher`'s doc comment on those); the old in-process
+ * `WingQualityWatcher` doesn't, and is excluded here on that basis rather
+ * than by importing any concrete watcher class.
+ */
+function isRunningRemoteWatcher(watcher: IQualityWatcher): boolean {
+  return typeof watcher.pause === 'function' && watcher.isRunning();
 }
 
 export class QualityWedgeBackstop {
@@ -117,9 +124,7 @@ export class QualityWedgeBackstop {
    * cooled-down (stopped) wing has nothing live to be stuck.
    */
   async check(now: Date): Promise<void> {
-    const running = [...this.getWatchers().entries()].filter(
-      (entry): entry is [string, RemoteQualityWatcher] => isRunningRemoteWatcher(entry[1]),
-    );
+    const running = [...this.getWatchers().entries()].filter((entry) => isRunningRemoteWatcher(entry[1]));
     if (running.length === 0) return;
 
     await Promise.all(

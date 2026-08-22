@@ -411,37 +411,6 @@ importers:
         specifier: 'catalog:'
         version: 2.2.12(typescript@5.7.3)
 
-  apps/quality-watcher-process:
-    dependencies:
-      '@minions/events':
-        specifier: workspace:*
-        version: link:../../libs/events
-      '@minions/quality-watcher':
-        specifier: workspace:*
-        version: link:../../libs/quality-watcher
-      express:
-        specifier: 'catalog:'
-        version: 4.22.2(supports-color@10.2.2)
-    devDependencies:
-      '@types/express':
-        specifier: 'catalog:'
-        version: 4.17.25
-      '@types/node':
-        specifier: 'catalog:'
-        version: 22.20.1
-      esbuild:
-        specifier: 'catalog:'
-        version: 0.27.3
-      tsx:
-        specifier: ^4.19.0
-        version: 4.23.12
-      typescript:
-        specifier: 'catalog:'
-        version: 5.7.3
-      vitest:
-        specifier: 'catalog:'
-        version: 4.1.10(@types/node@22.20.1)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@22.1.0(supports-color@10.2.2))(vite@8.2.1(@types/node@22.20.1)(esbuild@0.27.3)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-
   apps/registry-worker:
     devDependencies:
       '@cloudflare/workers-types':
@@ -974,37 +943,22 @@ importers:
       '@minions/events':
         specifier: workspace:*
         version: link:../events
-      '@minions/file-store':
-        specifier: workspace:*
-        version: link:../file-store
-      cross-spawn:
-        specifier: ^7.0.6
-        version: 7.0.6
-      effect:
+    devDependencies:
+      '@types/node':
         specifier: 'catalog:'
-        version: 3.19.14
-      eslint:
-        specifier: ^9.8.0
-        version: 9.39.5(jiti@2.7.0)(supports-color@10.2.2)
+        version: 22.20.1
       typescript:
         specifier: 'catalog:'
         version: 5.7.3
+      typescript-eslint:
+        specifier: ^8.19.0
+        version: 8.67.0(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@5.7.3)
       vite:
         specifier: 'catalog:'
         version: 8.2.1(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)
       vitest:
         specifier: 'catalog:'
         version: 4.1.10(@types/node@22.20.1)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@22.1.0(supports-color@10.2.2))(vite@8.2.1(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
-    devDependencies:
-      '@types/cross-spawn':
-        specifier: ^6.0.6
-        version: 6.0.6
-      '@types/node':
-        specifier: 'catalog:'
-        version: 22.20.1
-      typescript-eslint:
-        specifier: ^8.19.0
-        version: 8.67.0(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@5.7.3)
 
   libs/repo-perspective:
     dependencies:
@@ -11492,6 +11446,7 @@ snapshots:
       '@esbuild/win32-arm64': 0.28.2
       '@esbuild/win32-ia32': 0.28.2
       '@esbuild/win32-x64': 0.28.2
+    optional: true
 
   escalade@3.2.0: {}
 
@@ -13804,6 +13759,7 @@ snapshots:
       esbuild: 0.28.2
     optionalDependencies:
       fsevents: 2.3.3
+    optional: true
 
   type-check@0.4.0:
     dependencies:
