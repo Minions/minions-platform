@@ -4,6 +4,7 @@ import { builtinModules } from 'module';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { cp, readFile } from 'fs/promises';
+import { existsSync } from 'fs';
 import { execFileSync } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -71,6 +72,20 @@ const workspacePlugin = {
     });
   },
 };
+
+// Every esbuild ESM output that might bundle a CJS dependency doing its own
+// `require()` (e.g. cross-spawn, pulled in transitively by
+// productionQualityWatcherFactory.ts's real oxlint-process spawning) needs
+// this shim — esbuild's own `require` polyfill for `format: 'esm'` bundles.
+// Shared between both build() calls below so the second one doesn't drift
+// from the main bundle's own working banner.
+const cjsInteropBanner = `import { createRequire as __createRequire__ } from 'module';
+import { fileURLToPath as __fileURLToPath__ } from 'url';
+import __path__ from 'path';
+const require = __createRequire__(import.meta.url);
+const __filename = __fileURLToPath__(import.meta.url);
+const __dirname = __path__.dirname(__filename);
+`;
 
 console.log('Building cabinet with esbuild...');
 
@@ -153,14 +168,7 @@ try {
       __WORKSPACE_OXLINT_VERSION_RANGE__: JSON.stringify(workspaceOxlintVersionRange),
     },
     banner: {
-      js: `#!/usr/bin/env node
-import { createRequire as __createRequire__ } from 'module';
-import { fileURLToPath as __fileURLToPath__ } from 'url';
-import __path__ from 'path';
-const require = __createRequire__(import.meta.url);
-const __filename = __fileURLToPath__(import.meta.url);
-const __dirname = __path__.dirname(__filename);
-`,
+      js: `#!/usr/bin/env node\n${cjsInteropBanner}`,
     },
   });
 
@@ -168,9 +176,50 @@ const __dirname = __path__.dirname(__filename);
 
   // Copy public directory to dist
   await copyPublicDir();
+
+  // productionQualityWatcherFactory.ts (see server.ts's own doc comment) is
+  // reached from the main bundle via a non-literal `import()` specifier —
+  // deliberately opaque to esbuild's static bundler, so server.ts type-
+  // checks identically whether or not this file exists in this checkout
+  // (e.g. it doesn't in a `minions-platform`-only extraction, per
+  // docs/design/repo-split-analysis.md). That opacity means esbuild never
+  // pulls this file's own code into dist/main.js, so it needs its own
+  // separate build step to actually produce a real dist/quality/*.js file
+  // for that runtime import to find — without this, the built product
+  // silently runs with quality watching permanently disabled, since nothing
+  // else ever compiles src/quality/*.ts to dist/. Skipped entirely (not an
+  // error) when the source file isn't present, so this same script also
+  // works unmodified against a `minions-platform`-only checkout.
+  await buildProductionQualityWatcherFactory();
 } catch (error) {
   console.error('Build failed:', error);
   process.exit(1);
+}
+
+async function buildProductionQualityWatcherFactory() {
+  const entry = path.resolve(__dirname, '../src/quality/productionQualityWatcherFactory.ts');
+  if (!existsSync(entry)) {
+    console.log('  (skipping productionQualityWatcherFactory.ts build — not present in this checkout)');
+    return;
+  }
+
+  await build({
+    entryPoints: [entry],
+    bundle: true,
+    platform: 'node',
+    target: 'node18',
+    format: 'esm',
+    outfile: path.resolve(__dirname, '../dist/quality/productionQualityWatcherFactory.js'),
+    plugins: [workspacePlugin],
+    external: [...builtinModules, ...builtinModules.map((m) => `node:${m}`)],
+    sourcemap: true,
+    minify: false,
+    banner: {
+      js: cjsInteropBanner,
+    },
+  });
+
+  console.log('✓ productionQualityWatcherFactory built successfully');
 }
 
 async function copyPublicDir() {
